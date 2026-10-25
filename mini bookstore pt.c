@@ -1,0 +1,490 @@
+#include <stdio.h>
+#include <string.h>
+#define SIZE 100
+#define MAX_TRANSACTIONS 500
+struct Book {
+int code;
+char description[50];
+char category[20];
+float price;
+int quantity;
+};
+struct Book books[SIZE] = {
+// History (7 books)
+{101, "Noli Me Tangere", "History", 250.00, 10},
+{102, "El Filibusterismo", "History", 275.00, 7},
+{103, "Philippine History", "History", 300.00, 5},
+{104, "World History", "History", 320.00, 6},
+{105, "Ancient Civilizations", "History", 290.00, 8},
+{106, "The American Era", "History", 260.00, 4},
+{107, "Spanish Colonization", "History", 280.00, 9},
+
+// Science (7 books)
+{201, "Science Basics", "Science", 180.00, 8},
+{202, "Physics Principles", "Science", 400.00, 6},
+{203, "Organic Chemistry", "Science", 450.00, 5},
+{204, "Cell Biology", "Science", 380.00, 7},
+{205, "Earth Science", "Science", 220.00, 10},
+{206, "Astronomy Guide", "Science", 310.00, 4},
+{207, "Human Anatomy", "Science", 500.00, 3},
+// Fiction (7 books)
+{301, "Harry Potter", "Fiction", 350.00, 5},
+{302, "Percy Jackson", "Fiction", 320.00, 8},
+{303, "The Lord of the Rings", "Fiction", 450.00, 4},
+{304, "To Kill a Mockingbird", "Fiction", 280.00, 6},
+{305, "1984", "Fiction", 300.00, 7},
+{306, "The Great Gatsby", "Fiction", 270.00, 5},
+{307, "Pride and Prejudice", "Fiction", 260.00, 9},
+// Education (7 books)
+{401, "Math for Beginners", "Education", 200.00, 12},
+{402, "Advanced Algebra", "Education", 340.00, 6},
+{403, "English Grammar", "Education", 220.00, 10},
+{404, "General Psychology", "Education", 310.00, 7},
+{405, "Statistics 101", "Education", 290.00, 8},
+{406, "Principles of Economics", "Education", 360.00, 5},
+{407, "Teaching Methods", "Education", 250.00, 9}
+};
+int n = 28; // Total initial books (7 per genre * 4 genres)
+struct Transaction {
+char action[30];
+int code;
+};
+struct Transaction history[MAX_TRANSACTIONS];
+int historyCount = 0;
+
+
+void addHistory(char action[], int code) {
+if (historyCount < MAX_TRANSACTIONS) {
+strcpy(history[historyCount].action, action);
+history[historyCount].code = code;
+historyCount++;
+} else {
+printf("Transaction history is full!\n");
+}
+
+
+}
+// looking for book titles that are featured in the store
+void bookSelection() {
+int i;
+printf("\n========== AVAILABLE BOOKS ==========\n");
+if (n == 0) {
+printf("No books available!\n");
+return;
+}
+for (i = 0; i < n; i++) {
+// Display category heading
+if (i == 0 ||
+strcmp(books[i].category, books[i - 1].category) != 0) {
+printf("\n");
+printf("========================================\n");
+printf(" %s BOOKS\n", books[i].category);
+printf("========================================\n");
+printf("%-6s %-30s %10s %8s\n",
+"CODE", "DESCRIPTION", "PRICE", "STOCK");
+printf("------------------------------------------------------------\n");
+}
+printf("%-6d %-30s %10.2f %8d\n",
+books[i].code,
+books[i].description,
+books[i].price,
+books[i].quantity);
+}
+printf("\n========================================\n");
+printf(" END OF BOOK LIST\n");
+printf("========================================\n");
+}
+
+
+
+void insertBook() {
+int i, j, choice, genreCount = 0, position;
+char tempCategory[20];
+struct Book newBook;
+if (n >= SIZE) {
+printf("Bookshop is full!\n");
+return;
+}
+do {
+printf("Enter book code (3 digits): ");
+if (scanf("%d", &newBook.code) != 1) {
+printf("Invalid input! Numbers only.\n");
+while (getchar() != '\n');
+newBook.code = 0;
+continue;
+}
+if (newBook.code < 100 || newBook.code > 999) {
+printf("Invalid book code! Enter exactly 3 digits.\n");
+continue;
+}
+for (i = 0; i < n; i++) {
+if (books[i].code == newBook.code) {
+break;
+}
+}
+if (i < n) {
+printf("Book code already exists! Try again.\n");
+}
+} while (newBook.code < 100 ||
+newBook.code > 999 ||
+i < n);
+printf("Enter description: ");
+scanf(" %49[^\n]", newBook.description);
+printf("\n=== BOOK GENRE ===\n");
+printf("1. Fiction\n");
+printf("2. Science\n");
+printf("3. History\n");
+printf("4. Education\n");
+printf("Choose category: ");
+if (scanf("%d", &choice) != 1) {
+printf("Invalid input!\n");
+while (getchar() != '\n');
+return;
+}
+switch (choice) {
+case 1: strcpy(tempCategory, "Fiction"); break;
+case 2: strcpy(tempCategory, "Science"); break;
+case 3: strcpy(tempCategory, "History"); break;
+case 4: strcpy(tempCategory, "Education"); break;
+default:
+printf("Invalid category!\n");
+return;
+}
+strcpy(newBook.category, tempCategory);
+printf("Enter price: ");
+if (scanf("%f", &newBook.price) != 1 ||
+newBook.price < 0) {
+printf("Invalid price!\n");
+while (getchar() != '\n');
+return;
+}
+int valid;
+float inputQuantity;
+do {
+printf("Enter quantity (whole number only): ");
+valid = scanf("%f", &inputQuantity);
+if (valid != 1) {
+printf("Invalid quantity! Numbers only.\n");
+while (getchar() != '\n');
+continue;
+}
+if (inputQuantity < 0 ||
+inputQuantity != (int)inputQuantity) {
+printf("Invalid quantity! Whole numbers only.\n");
+continue;
+}
+newBook.quantity = (int)inputQuantity;
+break;
+} while (1);
+/* Find the correct position for the category */
+position = n;
+for (i = 0; i < n; i++) {
+if (strcmp(books[i].category, tempCategory) == 0) {
+position = i + 1;
+while (position < n &&
+strcmp(books[position].category,
+tempCategory) == 0) {
+position++;
+}
+break;
+}
+}
+/* If the category does not exist yet,
+place it at the end. */
+for (j = n; j > position; j--) {
+books[j] = books[j - 1];
+}
+books[position] = newBook;
+n++;
+addHistory("Inserted", newBook.code);
+printf("Book added successfully under %s!\n",
+newBook.category);
+}
+
+
+
+
+void searchBook() {
+int code, i, valid;
+do {
+printf("Enter book code to search: ");
+valid = scanf("%d", &code);
+if (valid != 1) {
+printf("Invalid input! Numbers only.\n");
+while (getchar() != '\n');
+continue;
+}
+if (code < 100 || code > 999) {
+printf("Invalid book code! Enter 3 digits only.\n");
+continue;
+}
+break;
+} while (1);
+for (i = 0; i < n; i++) {
+if (books[i].code == code) {
+printf("\nBook found!\n");
+printf("Description: %s\n", books[i].description);
+printf("Category: %s\n", books[i].category);
+printf("Price: %.2f\n", books[i].price);
+printf("Quantity: %d\n", books[i].quantity);
+addHistory("Searched - Found", code);
+return;
+}
+}
+addHistory("Searched - Not Found", code);
+printf("Book not found!\n");
+}
+void deleteBook() {
+int code, i, j, valid;
+if (n == 0) {
+printf("No books to delete!\n");
+return;
+}
+do {
+printf("Enter book code to delete: ");
+valid = scanf("%d", &code);
+if (valid != 1) {
+printf("Invalid input! Numbers only.\n");
+while (getchar() != '\n');
+continue;
+}
+if (code < 100 || code > 999) {
+printf("Invalid book code! Enter 3 digits only.\n");
+continue;
+}
+break;
+} while (1);
+for (i = 0; i < n; i++) {
+if (books[i].code == code) {
+int genreCount = 0;
+for (j = 0; j < n; j++) {
+if (strcmp(books[j].category,
+books[i].category) == 0) {
+genreCount++;
+}
+}
+if (genreCount <= 7) {
+printf("Cannot delete! Genre '%s' must maintain a minimum of 7 books.\n",
+books[i].category);
+return;
+}
+for (j = i; j < n - 1; j++) {
+books[j] = books[j + 1];
+}
+n--;
+addHistory("Deleted", code);
+printf("Book deleted successfully!\n");
+return;
+}
+}
+printf("Book not found!\n");
+}
+
+
+
+void sortBooks() {
+int i, j, start;
+struct Book temp;
+if (n == 0) {
+printf("No books to sort!\n");
+return;
+}
+// Sort each genre by price: cheap to expensive
+start = 0;
+while (start < n) {
+end:
+j = start + 1;
+while (j < n &&
+strcmp(books[start].category,
+books[j].category) == 0) {
+j++;
+}
+for (i = start; i < j - 1; i++) {
+int k;
+for (k = start; k < j - 1 - (i - start); k++) {
+if (books[k].price > books[k + 1].price) {
+temp = books[k];
+books[k] = books[k + 1];
+books[k + 1] = temp;
+}
+}
+}
+start = j;
+}
+printf("\nBooks sorted by genre and price!\n");
+bookSelection();
+}
+void displayHistory() {
+int i;
+printf("\n=== TRANSACTION HISTORY ===\n");
+if (historyCount == 0) {
+printf("No transactions yet!\n");
+return;
+}
+for (i = 0; i < historyCount; i++) {
+printf("%d. %s - Book Code: %d\n",
+i + 1,
+history[i].action,
+history[i].code);
+}
+}
+
+
+void updateBook() {
+int code, i, newQuantity;
+float newPrice;
+char newDescription[50];
+printf("Enter book code to update: ");
+if (scanf("%d", &code) != 1) {
+printf("Invalid book code!\n");
+while (getchar() != '\n');
+return;
+}
+for (i = 0; i < n; i++) {
+if (books[i].code == code) {
+printf("\nBook found!\n");
+printf("Current description: %s\n", books[i].description);
+printf("Current price: %.2f\n", books[i].price);
+printf("Current quantity: %d\n", books[i].quantity);
+printf("\nEnter new description: ");
+scanf(" %49[^\n]", newDescription);
+printf("Enter new price: ");
+if (scanf("%f", &newPrice) != 1 ||
+newPrice < 0) {
+printf("Invalid price! Cannot update book.\n");
+while (getchar() != '\n');
+return;
+}
+printf("Enter new quantity: ");
+if (scanf("%d", &newQuantity) != 1 ||
+newQuantity < 0) {
+printf("Invalid quantity! Cannot update book.\n");
+while (getchar() != '\n');
+return;
+}
+/* Save only after all inputs are valid */
+strcpy(books[i].description, newDescription);
+books[i].price = newPrice;
+books[i].quantity = newQuantity;
+addHistory("Updated", code);
+printf("Book updated successfully!\n");
+return;
+}
+}
+printf("Book not found! Cannot update.\n");
+}
+void sellBook() {
+int code, quantity, i, valid;
+float total;
+printf("\n=== SELL BOOK ===\n");
+/* Validate book code */
+do {
+printf("Enter book code: ");
+valid = scanf("%d", &code);
+if (valid != 1) {
+printf("Invalid input! Numbers only.\n");
+while (getchar() != '\n');
+continue;
+}
+if (code < 100 || code > 999) {
+printf("Invalid book code! Enter 3 digits only.\n");
+continue;
+}
+break;
+} while (1);
+/* Search for the book */
+for (i = 0; i < n; i++) {
+if (books[i].code == code) {
+printf("Book: %s\n", books[i].description);
+printf("Price: %.2f\n", books[i].price);
+printf("Available quantity: %d\n", books[i].quantity);
+if (books[i].quantity == 0) {
+printf("Out of stock!\n");
+return;
+}
+/* Validate quantity */
+do {
+printf("Enter quantity to sell: ");
+valid = scanf("%d", &quantity);
+if (valid != 1) {
+printf("Invalid quantity! Numbers only.\n");
+while (getchar() != '\n');
+continue;
+}
+if (quantity <= 0) {
+printf("Invalid quantity! Enter a positive number.\n");
+continue;
+}
+if (quantity > books[i].quantity) {
+printf("Not enough stock! Available: %d\n",
+books[i].quantity);
+continue;
+}
+break;
+} while (1);
+total = books[i].price * quantity;
+books[i].quantity -= quantity;
+printf("\n=== SALES RECEIPT ===\n");
+printf("Book: %s\n", books[i].description);
+printf("Quantity sold: %d\n", quantity);
+printf("Price per book: %.2f\n", books[i].price);
+printf("Total amount: %.2f\n", total);
+printf("Remaining stock: %d\n", books[i].quantity);
+printf("Sale successful!\n");
+addHistory("Book Sold", code);
+return;
+}
+}
+printf("Book not found!\n");
+}
+int main() {
+int choice, valid;
+char buffer[100];
+do {
+printf("\n=== MINI BOOKSHOP MANAGEMENT ===\n");
+printf("1. Book Selection List\n");
+printf("2. Insert Book\n");
+printf("3. Delete Book\n");
+printf("4. Search Book\n");
+printf("5. Sort Books\n");
+printf("6. Update Book\n");
+printf("7. Sell Book\n");
+printf("8. Transaction History\n");
+printf("0. Exit\n");
+printf("Enter your choice: ");
+if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+return 0;
+}
+valid = sscanf(buffer, "%d", &choice);
+if (valid != 1) {
+printf("Invalid input! Please enter a number.\n");
+printf("Press ENTER to continue...");
+getchar();
+continue;
+}
+if (choice < 0 || choice > 8) {
+printf("Invalid choice! Choose from 0 to 8.\n");
+printf("Press ENTER to continue...");
+getchar();
+continue;
+}
+switch (choice) {
+case 1: bookSelection(); break;
+case 2: insertBook(); break;
+case 3: deleteBook(); break;
+case 4: searchBook(); break;
+case 5: sortBooks(); break;
+case 6: updateBook(); break;
+case 7: sellBook(); break;
+case 8: displayHistory(); break;
+case 0:
+printf("Thank you for using the program!\n");
+break;
+}
+if (choice != 0) {
+printf("\nPress ENTER to return to menu...");
+getchar();
+}
+} while (choice != 0);
+return 0;
+}
